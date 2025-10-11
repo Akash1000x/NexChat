@@ -3,7 +3,7 @@ import type { ModelsCategory } from "@/types/models";
 import { useQuery } from "@tanstack/react-query";
 
 const fetchModels = async (): Promise<ModelsCategory[]> => {
-  const { data } = await apiClient.get(`/chat/get-models`)
+  const { data } = await apiClient.get(`/v1/chat/get-models`)
   return data.data;
 }
 
