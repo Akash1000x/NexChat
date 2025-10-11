@@ -2,18 +2,18 @@ import { ArrowUp, ChevronDown } from "lucide-react"
 import { Textarea } from "./ui/textarea"
 import { Button } from "./ui/button"
 import { icons } from "./icon"
-import type { Model, ModelsCategory } from "@/types/models"
+import type { Model } from "@/types/models"
 import { Label } from "./ui/label"
 import React, { useEffect } from "react"
 import { CustomPopover } from "./ui/popover"
+import { useGetModels } from "@/hooks/api/get-models"
 
-export default function PromptInputSection({
-  models,
+export default function PromptInput({
   onSubmit,
 }: {
-  models: ModelsCategory[]
   onSubmit: (data: any) => void
 }) {
+  const { data: models } = useGetModels()
   const [selectedModel, setSelectedModel] = React.useState<Model | null>(null)
   const [openPopover, setOpenPopover] = React.useState<boolean>(false)
   const [message, setMessage] = React.useState<string>("")
@@ -87,7 +87,7 @@ export default function PromptInputSection({
                     <ListItem
                       key={model.id}
                       model={model}
-                      categoryName={category.name}
+                      categoryName={category.slug}
                       onClick={() => handleSetSelectedModel(model)}
                     />
                   ))}
