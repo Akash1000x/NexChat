@@ -5,14 +5,15 @@ import { getMessages } from "@/controllers/getMessages.js";
 import { getModels } from "@/controllers/getModels.js";
 import { newConversation } from "@/controllers/newConversation.js";
 import { deleteConversation } from "@/controllers/delete-conversation.js";
+import { authMiddleware } from "@/utils/authmiddleware.js";
 
 const chatRouter: Router = Router();
 
-chatRouter.post("/", streamData);
-chatRouter.get("/get-threads", getThreads);
-chatRouter.get("/get-messages", getMessages);
+chatRouter.post("/", authMiddleware, streamData);
+chatRouter.get("/get-threads", authMiddleware, getThreads);
+chatRouter.get("/get-messages", authMiddleware, getMessages);
+chatRouter.post("/new", authMiddleware, newConversation)
+chatRouter.delete("/delete-conversation", authMiddleware, deleteConversation)
 chatRouter.get("/get-models", getModels);
-chatRouter.post("/new", newConversation)
-chatRouter.delete("/delete-conversation", deleteConversation)
 
 export default chatRouter;

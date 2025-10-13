@@ -4,8 +4,6 @@ import cors from "cors";
 import router from "./routes/index.js";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./utils/auth.js";
-import { createAuthMiddleware } from "better-auth/api";
-import { authMiddleware } from "./utils/authmiddleware.js";
 const app = express();
 
 app.use(
@@ -20,10 +18,10 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json());
 
-app.use("/api", authMiddleware, router);
+app.use("/api", router);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error("error", err)
+  // console.error("error", err)
   res.status(err.status || 500).json({
     success: false,
     error: {
