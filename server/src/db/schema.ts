@@ -167,3 +167,11 @@ export const modelsRelations = relations(models, ({ one }) => ({
     references: [modelCategories.id]
   })
 }))
+
+export const suggestionQuestions = pgTable("suggestion_questions", {
+  id: t.text("id").primaryKey().default(sql`gen_random_uuid()`),
+  category: t.text().default(""),
+  questions: t.json("questions").$type<string[]>(),
+
+  ...timestamps
+})
