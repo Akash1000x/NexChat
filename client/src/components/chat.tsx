@@ -1,6 +1,5 @@
 import Markdown from "@/components/markdown"
 import PromptInput from "@/components/prompt-input"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Body } from "@/components/ui/typography"
 import { useGetMessage } from "@/hooks/api/get-messages"
 import { useClipboard } from "@/hooks/useClipboard"
@@ -9,9 +8,11 @@ import type { Model } from "@/types/models"
 import React, { useEffect } from "react"
 import CopyToClipboard from "./copy-to-clipboard"
 import { startNewConversation } from "@/hooks/api/new-conversation"
-import { useNavigate } from "@tanstack/react-router"
+import { authClient } from "@/lib/auth-clients"
+import { useLocation, useNavigate } from "@tanstack/react-router"
 import { useQueryClient } from "@tanstack/react-query"
 import { Skeleton } from "./ui/skeleton"
+import SuggestionQueue from "./ui/suggestion-que"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -30,6 +31,9 @@ export default function Chat({ conversationId }: { conversationId?: string }) {
   const queryClient = useQueryClient()
   const [waitingForAiResponse, setWaitingForAiResponse] =
     React.useState<boolean>(false)
+  const { data: session } = authClient.useSession()
+  const location = useLocation()
+  const [message, setMessage] = React.useState<string>("")
 
   const navigate = useNavigate({ from: "/" })
 
@@ -48,10 +52,20 @@ export default function Chat({ conversationId }: { conversationId?: string }) {
     }
   }, [messages, aiResponse])
 
+  const handleSelectQuestion = (question: string) => {
+    setMessage(question)
+  }
+
   const handleSubmit = async (promptData: {
     message: string
     model: Model
   }) => {
+    if (!session?.session) {
+      navigate({
+        to: "/auth/sign-in",
+      })
+      return
+    }
     setWaitingForAiResponse(true)
     let activeConversationId = conversationId
     let isNewConversation = false
@@ -77,8 +91,9 @@ export default function Chat({ conversationId }: { conversationId?: string }) {
       threadId: activeConversationId,
       messages: messages,
       prompt: promptData.message,
-      preferences: "Alaways give Javascript code in typescript",
+      preferences: "",
       model: promptData.model,
+      newConversation: isNewConversation,
     }
 
     try {
@@ -88,6 +103,7 @@ export default function Chat({ conversationId }: { conversationId?: string }) {
           "Content-Type": "application/json",
           Accept: "text/event-stream",
         },
+        credentials: "include",
         body: JSON.stringify(body),
       })
       setWaitingForAiResponse(false)
@@ -146,6 +162,7 @@ export default function Chat({ conversationId }: { conversationId?: string }) {
           params: { id: activeConversationId },
           replace: true,
         })
+        queryClient.invalidateQueries({ queryKey: ["threads"] })
       }
     } catch (error) {
       console.error(error)
@@ -160,50 +177,60 @@ export default function Chat({ conversationId }: { conversationId?: string }) {
 
   return (
     <div className="w-full relative h-screen overflow-hidden pt-10">
-      <ScrollArea className="h-full overflow-auto" ref={chatRef}>
-        <div className="space-y-10 lg:w-3xl w-xl mx-auto pb-36">
-          {messages?.map((message, i) => (
-            <div key={`${message.id + i}`} className="">
-              {message.role === "user" ? (
-                <div className="group">
-                  <Body className="p-4 bg-muted rounded-md max-w-xl ml-auto text-justify">
-                    {message.parts[0].text}
-                  </Body>
-                  <div className="flex justify-end items-center p-2 h-12">
-                    <CopyToClipboard
-                      copied={copied}
-                      onClick={() => handleCopy(message.parts[0].text)}
-                    />
+      <div className="h-full overflow-auto pb-36" ref={chatRef}>
+        {location.pathname === "/" && !aiResponse && !waitingForAiResponse ? (
+          !message && (
+            <SuggestionQueue onSelectQuestion={handleSelectQuestion} />
+          )
+        ) : (
+          <div className="space-y-10 lg:w-3xl w-xl mx-auto px-3">
+            {messages?.map((message, i) => (
+              <div key={`${message.id + i}`} className="">
+                {message.role === "user" ? (
+                  <div className="group">
+                    <Body className="p-4 bg-muted rounded-md max-w-xl ml-auto text-justify">
+                      {message.parts[0].text}
+                    </Body>
+                    <div className="flex justify-end items-center p-2 h-12">
+                      <CopyToClipboard
+                        copied={copied}
+                        onClick={() => handleCopy(message.parts[0].text)}
+                      />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="group leading-8">
-                  <Markdown message={message.parts[0].text} />
-                  <div className="flex justify-start items-center p-2 h-12">
-                    <CopyToClipboard
-                      copied={copied}
-                      onClick={() => handleCopy(message.parts[0].text)}
-                    />
+                ) : (
+                  <div className="group leading-8">
+                    <Markdown message={message.parts[0].text} />
+                    <div className="flex justify-start items-center p-2 h-12">
+                      <CopyToClipboard
+                        copied={copied}
+                        onClick={() => handleCopy(message.parts[0].text)}
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
-          {waitingForAiResponse && (
-            <div className="flex gap-2">
-              <Skeleton className="size-3" />
-              <Skeleton className="size-3" />
-              <Skeleton className="size-3" />
-            </div>
-          )}
-          {aiResponse && (
-            <div className="group leading-8">
-              <Markdown message={aiResponse} />
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-      <PromptInput onSubmit={handleSubmit} />
+                )}
+              </div>
+            ))}
+            {waitingForAiResponse && (
+              <div className="flex gap-2">
+                <Skeleton className="size-3" />
+                <Skeleton className="size-3" />
+                <Skeleton className="size-3" />
+              </div>
+            )}
+            {aiResponse && (
+              <div className="group leading-8">
+                <Markdown message={aiResponse} />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      <PromptInput
+        onSubmit={handleSubmit}
+        message={message}
+        setMessage={setMessage}
+      />
     </div>
   )
 }
