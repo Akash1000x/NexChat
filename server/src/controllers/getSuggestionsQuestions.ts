@@ -4,13 +4,15 @@ import { db } from "@/db/index.js";
 
 export const GetSuggestionsQuestions = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const questions = await db.query.suggestionQuestions.findMany().then((que) => {
-      const suggestions = que.reduce<Record<string, string[]>>((acc, item) => {
-        acc[item.category as string] = item.questions as string[]
-        return acc
-      }, {})
-      return suggestions
+    const questions = await db.query.suggestionQuestions.findMany({
+      columns: {
+        id: true,
+        category: true,
+        questions: true
+      }
     })
+
+
     res.status(200).json({ success: true, data: questions })
   } catch (error) {
     console.error("GetSuggestionsQuestions error", error);
