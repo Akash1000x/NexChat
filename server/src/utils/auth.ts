@@ -21,7 +21,7 @@ export const auth = betterAuth({
   },
   trustedOrigins: [
     "http://localhost:3000",
-    "https://batchit-ylix.vercel.app",
+    "https://chat.akashdev.me"
   ],
   basePath: "/api/auth",
   advanced: {
