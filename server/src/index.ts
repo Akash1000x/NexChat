@@ -8,9 +8,9 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://batchit-ylix.vercel.app"], // Replace with your frontend's origin
-    methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed HTTP methods
-    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+    origin: ["http://localhost:3000", "https://batchit-ylix.vercel.app"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   })
 );
 app.all("/api/auth/*splat", toNodeHandler(auth));

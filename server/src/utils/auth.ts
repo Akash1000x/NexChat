@@ -15,7 +15,7 @@ export const auth = betterAuth({
         type: "string",
         required: false,
         defaultValue: "user",
-        input: false, // don't allow user to set role
+        input: false,
       },
     },
   },
@@ -24,4 +24,15 @@ export const auth = betterAuth({
     "https://batchit-ylix.vercel.app",
   ],
   basePath: "/api/auth",
+  advanced: {
+    cookies: {
+      session_token: {
+        attributes: {
+          sameSite: "none",
+          secure: true,
+          httpOnly: true,
+        },
+      },
+    },
+  },
 });
