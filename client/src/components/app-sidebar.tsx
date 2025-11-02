@@ -1,4 +1,4 @@
-import { LogIn, LogOut, Plus, Search, Trash2 } from "lucide-react"
+import { Loader2, LogIn, LogOut, Plus, Search, Trash2 } from "lucide-react"
 
 import {
   Sidebar,
@@ -15,7 +15,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import type { ThreadType } from "@/types/threads"
-import { useGetThreads } from "@/hooks/api/get-threads"
+import { useGetThreads, useSearchThreads } from "@/hooks/api/get-threads"
 import {
   Link,
   useLocation,
@@ -28,16 +28,37 @@ import { useDeleteConversationMutation } from "@/hooks/api/delete-conversation"
 import { cn } from "@/lib/utils"
 import { authClient } from "@/lib/auth-clients"
 import { Avatar, AvatarFallback } from "./ui/avatar"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog"
+import { useState } from "react"
+import SearchInput from "./search-input"
+import { Body } from "./ui/typography"
 
 export default function AppSidebar() {
   const params = useParams({ from: "/chat/$id", shouldThrow: false })
   const navigate = useNavigate({ from: "/chat/$id" })
   const location = useLocation()
   const { data: session } = authClient.useSession()
-
+  const [isOpen, setIsOpen] = useState(false)
   const { data } = useGetThreads(0, session?.session?.userId || "")
   const { state } = useSidebar()
   const deleteConversationMutation = useDeleteConversationMutation()
+  const [search, setSearch] = useState("")
+  const { data: searchThreads, isLoading: isLoadingSearchThreads } =
+    useSearchThreads(search)
+
+  const handleOpen = () => setIsOpen(true)
+  const handleClose = () => setIsOpen(false)
+
+  const handleSearch = (search: string) => {
+    setSearch(search)
+  }
+
   if (location.pathname.includes("/auth")) {
     return null
   }
@@ -53,6 +74,7 @@ export default function AppSidebar() {
           <Button
             variant={"ghost"}
             size={"icon-sm"}
+            onClick={handleOpen}
             className="invisible transition-[visibility,opacity] group-data-[state=collapsed]:delay-300 group-data-[state=expanded]:delay-0 group-data-[state=collapsed]:visible"
           >
             <Search />
@@ -77,7 +99,7 @@ export default function AppSidebar() {
           <div className="flex items-center justify-between">
             <div className="size-8"></div>
             <h1 className="text-2xl font-bold text-center">AI Chat</h1>
-            <Button variant={"ghost"} size={"icon-sm"}>
+            <Button variant={"ghost"} size={"icon-sm"} onClick={handleOpen}>
               <Search />
             </Button>
           </div>
@@ -197,6 +219,52 @@ export default function AppSidebar() {
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent>
+          <DialogHeader className="border-b pb-2">
+            <SearchInput onSearch={handleSearch} />
+            <DialogTitle className="hidden"></DialogTitle>
+            <DialogDescription className="hidden"></DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[calc(100vh-15rem)] overflow-y-auto space-y-1">
+            {isLoadingSearchThreads ? (
+              <Body className="text-center text-sm text-muted-foreground flex items-center justify-center h-full">
+                <Loader2 className="size-4 animate-spin" />
+              </Body>
+            ) : search ? (
+              searchThreads && searchThreads?.length > 0 ? (
+                searchThreads?.map((thread: ThreadType) => (
+                  <Link
+                    key={thread.threadId}
+                    to="/chat/$id"
+                    onClick={handleClose}
+                    params={{ id: thread.threadId }}
+                    className="block px-2 py-1 hover:bg-sidebar-accent rounded-md"
+                  >
+                    <Body>{thread.title}</Body>
+                  </Link>
+                ))
+              ) : (
+                <Body className="text-center text-sm text-muted-foreground">
+                  No results found
+                </Body>
+              )
+            ) : (
+              data?.map((thread: ThreadType) => (
+                <Link
+                  key={thread.threadId}
+                  to="/chat/$id"
+                  onClick={handleClose}
+                  params={{ id: thread.threadId }}
+                  className="block px-2 py-1 hover:bg-sidebar-accent hover:rounded-md border-b last:border-b-0"
+                >
+                  <Body>{thread.title}</Body>
+                </Link>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
