@@ -16,6 +16,7 @@ export const getMessages = async (req: Request, res: Response, next: NextFunctio
         id: messages.id,
         role: messages.role,
         parts: messages.parts,
+        model: messages.model
       })
       .from(messages)
       .where(eq(messages.threadId, String(threadId)))
