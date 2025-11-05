@@ -1,18 +1,25 @@
 import { apiClient } from "@/lib/api-client"
 import type { ThreadType } from "@/types/threads";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { AxiosError } from "axios"
 import { toast } from "sonner"
 
 
-export const useGetThreads = (offset: number, userId: string) => {
-  return useQuery<ThreadType[], Error>({
-    queryKey: ["threads", offset],
-    queryFn: async () => {
-      const { data } = await apiClient.get(`/v1/chat/get-threads?offset=${offset}`)
+export const useGetThreads = (userId: string) => {
+  return useInfiniteQuery<ThreadType[], Error>({
+    queryKey: ["threads"],
+    queryFn: async ({ pageParam = 0 }) => {
+      const { data } = await apiClient.get(`/v1/chat/get-threads?offset=${pageParam}`)
       return data.data;
     },
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage && lastPage.length > 0) {
+        return allPages.length;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
     enabled: !!userId,
   })
 }

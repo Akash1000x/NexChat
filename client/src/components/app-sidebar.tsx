@@ -11,6 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSkeleton,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar"
@@ -38,7 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import SearchInput from "./search-input"
 import { Body } from "./ui/typography"
 
@@ -48,12 +49,14 @@ export default function AppSidebar() {
   const location = useLocation()
   const { data: session } = authClient.useSession()
   const [isOpen, setIsOpen] = useState(false)
-  const { data } = useGetThreads(0, session?.session?.userId || "")
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useGetThreads(session?.session?.userId || "")
   const { state } = useSidebar()
   const deleteConversationMutation = useDeleteConversationMutation()
   const [search, setSearch] = useState("")
   const { data: searchThreads, isLoading: isLoadingSearchThreads } =
     useSearchThreads(search)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const handleOpen = () => setIsOpen(true)
   const handleClose = () => setIsOpen(false)
@@ -61,6 +64,31 @@ export default function AppSidebar() {
   const handleSearch = (search: string) => {
     setSearch(search)
   }
+
+  const threads = data?.pages.flatMap((page) => page) || []
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0]
+        if (first.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 1 },
+    )
+
+    const currentRef = loadMoreRef.current
+    if (currentRef) {
+      observer.observe(currentRef)
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef)
+      }
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   if (location.pathname.includes("/auth")) {
     return null
@@ -114,10 +142,10 @@ export default function AppSidebar() {
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            {data && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
+            {threads.length > 0 && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
-                {data?.map((item: ThreadType, i: number) => (
+                {threads.map((item: ThreadType, i: number) => (
                   <SidebarMenuItem key={i}>
                     <SidebarMenuButton
                       className={cn(
@@ -166,6 +194,15 @@ export default function AppSidebar() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+                <div ref={loadMoreRef} className="py-2 text-center">
+                  {hasNextPage && (
+                    <>
+                      <SidebarMenuSkeleton />
+                      <SidebarMenuSkeleton />
+                      <SidebarMenuSkeleton />
+                    </>
+                  )}
+                </div>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -259,7 +296,7 @@ export default function AppSidebar() {
                 </Body>
               )
             ) : (
-              data?.map((thread: ThreadType) => (
+              threads.map((thread: ThreadType) => (
                 <Link
                   key={thread.threadId}
                   to="/chat/$id"
