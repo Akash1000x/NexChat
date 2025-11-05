@@ -134,8 +134,6 @@ export const modelCategories = pgTable("model_categories", {
     .default(sql`gen_random_uuid()`),
   name: t.text("name").notNull(),
   slug: t.text("slug").notNull(),
-  // apiKey: t.text("api_key").notNull(),
-  // baseUrl: t.text("base_url"),
 
   ...timestamps,
 });
