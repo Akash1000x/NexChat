@@ -11,7 +11,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import AppSidebar from "@/components/app-sidebar"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
-import ThemeToggle from "@/components/ui/theme-toggle"
+import TogglePanel from "@/components/toggle-panel"
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -22,7 +22,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <SidebarProvider>
         <AppSidebar />
-        <ThemeToggle />
+        <TogglePanel />
         <Outlet />
         <Toaster />
       </SidebarProvider>

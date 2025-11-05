@@ -6,7 +6,7 @@ export default function ThemeToggle() {
 
   return (
     <button
-      className="rounded-full fixed top-1.5 right-1.5 z-10 border p-2 [&_svg]:size-3.5"
+      className="rounded-full border p-2 [&_svg]:size-3.5"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
     >
       {theme === "dark" ? <Sun /> : <Moon />}
