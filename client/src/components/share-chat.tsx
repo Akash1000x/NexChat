@@ -65,12 +65,14 @@ export default function ShareChat() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button
-          className="rounded-full border p-2 [&_svg]:size-3.5"
+        <Button
+          variant="outline"
+          size="icon"
+          title="Share Conversation"
           onClick={handleShareConversation}
         >
-          <Share className="size-4" />
-        </button>
+          <Share />
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -1,4 +1,4 @@
-import { Loader2, LogIn, LogOut, Plus, Search, Trash2 } from "lucide-react"
+import { Loader2, Plus, Search, Trash2 } from "lucide-react"
 
 import {
   Sidebar,
@@ -31,7 +31,6 @@ import { Button } from "./ui/button"
 import { CustomAlertDialog } from "./custom-ui/custom-alert"
 import { cn } from "@/lib/utils"
 import { authClient } from "@/lib/auth-clients"
-import { Avatar, AvatarFallback } from "./ui/avatar"
 import {
   Dialog,
   DialogContent,
@@ -42,6 +41,7 @@ import {
 import { useEffect, useRef, useState } from "react"
 import SearchInput from "./search-input"
 import { Body } from "./ui/typography"
+import UserSettings from "./user-settings"
 
 export default function AppSidebar() {
   const params = useParams({ from: "/chat/$id", shouldThrow: false })
@@ -210,57 +210,7 @@ export default function AppSidebar() {
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              {session?.session ? (
-                <SidebarMenuButton
-                  asChild
-                  variant={"outline"}
-                  className="justify-between py-6"
-                >
-                  <div className="space-x-4 capitalize">
-                    <Avatar>
-                      <AvatarFallback>
-                        {session?.user?.name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="truncate text-lg">
-                      {session?.user?.name}
-                    </span>
-                    <CustomAlertDialog
-                      trigger={
-                        <Button
-                          variant={"destructive"}
-                          size={"icon-sm"}
-                          title="Sign Out"
-                        >
-                          <LogOut />
-                        </Button>
-                      }
-                      title="Sign Out"
-                      description="Are you sure you want to sign out?"
-                      variant={"destructive"}
-                      onConfirm={async () => {
-                        await authClient.signOut()
-                        navigate({
-                          to: "/",
-                          replace: true,
-                          reloadDocument: true,
-                        })
-                      }}
-                    />
-                  </div>
-                </SidebarMenuButton>
-              ) : (
-                <SidebarMenuButton
-                  variant={"outline"}
-                  className="justify-center py-6"
-                  asChild
-                >
-                  <Link to="/auth/sign-in" className="space-x-4">
-                    <LogIn />
-                    <span>Login</span>
-                  </Link>
-                </SidebarMenuButton>
-              )}
+              <UserSettings />
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
