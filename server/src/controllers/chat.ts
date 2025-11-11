@@ -4,6 +4,7 @@ import { messages as messagesTable, models, conversations } from "../db/schema.j
 import { db } from "../db/index.js";
 import { BadRequestError, InternalRequestError } from "@/utils/errors.js";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 
 const client = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -24,6 +25,35 @@ interface RequestBody {
   newConversation: boolean;
 }
 
+const requestBodySchema = z.object({
+  model: z.object({
+    id: z.string(),
+    name: z.string(),
+    slug: z.string(),
+    isDefault: z.boolean(),
+    isActive: z.boolean(),
+    isPremium: z.boolean(),
+    categoryId: z.string().nullable(),
+  }),
+  preferences: z.string(),
+  messages: z.array(
+    z.object({
+      id: z.string(),
+      model: z.string(),
+      role: z.string(),
+      parts: z.array(
+        z.object({
+          type: z.literal("text"),
+          text: z.string(),
+        })
+      ).nullable(),
+    })
+  ),
+  conversationId: z.string().min(1, "Conversation ID is required"),
+  prompt: z.string().min(1, "Prompt is required"),
+  newConversation: z.boolean(),
+});
+
 const systemPrompt = (preferences: string) => {
   return `
 You are a helpful assistant that can answer the questions of the user.
@@ -40,7 +70,19 @@ const SystemPromptToGetTitle = `
 
 export const streamData = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let { model, preferences, messages, conversationId, prompt, newConversation }: RequestBody = req.body;
+    // Validate request body with Zod schema
+    const validationResult = requestBodySchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return next(
+        new BadRequestError({
+          name: "BadRequestError",
+          message: `Validation error: ${validationResult.error.issues.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`).join(', ')}`
+        })
+      );
+    }
+
+    let { model, preferences, messages, conversationId, prompt, newConversation }: RequestBody = validationResult.data as RequestBody;
 
     if (!conversationId) {
       return next(new BadRequestError({ name: "BadRequestError", message: "Conversation 'id' is required" }));
