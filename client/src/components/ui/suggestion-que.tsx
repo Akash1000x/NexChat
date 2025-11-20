@@ -21,7 +21,7 @@ export default function SuggestionQueue({
   onSelectQuestion,
 }: SuggestionQueueProps) {
   const { data } = useGetSuggestionQuestions()
-  const [activeCategory, setActiveCategory] = React.useState<Category>("learn")
+  const [activeCategory, setActiveCategory] = React.useState<Category>("create")
   const [isVisible, setIsVisible] = React.useState(false)
   const [isAnimating, setIsAnimating] = React.useState(false)
   const { data: session } = authClient.useSession()
