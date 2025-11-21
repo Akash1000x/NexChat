@@ -129,7 +129,9 @@ export default function AppSidebar() {
         <SidebarHeader className="gap-4">
           <div className="flex items-center justify-between">
             <div className="size-8"></div>
-            <h1 className="text-2xl font-bold text-center">NexChat</h1>
+            <h1 className="text-2xl font-bold text-center">
+              <Link to="/">NexChat</Link>
+            </h1>
             <Button variant={"ghost"} size={"icon-sm"} onClick={handleOpen}>
               <Search />
             </Button>
