@@ -46,12 +46,7 @@ export default function Chat({ conversationId }: { conversationId?: string }) {
 
   useEffect(() => {
     if (chatRef.current) {
-      const scrollElement = chatRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]",
-      )
-      if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight
-      }
+      chatRef.current.scrollTop = chatRef.current.scrollHeight
     }
   }, [messages, aiResponse])
 
@@ -189,7 +184,7 @@ export default function Chat({ conversationId }: { conversationId?: string }) {
 
   return (
     <div className="w-full relative h-screen overflow-hidden pt-10">
-      <div className="h-full overflow-auto pb-36" ref={chatRef}>
+      <div className="h-full overflow-auto pb-48" ref={chatRef}>
         {location.pathname === "/" && !aiResponse && !waitingForAiResponse ? (
           !message && (
             <SuggestionQueue onSelectQuestion={handleSelectQuestion} />
