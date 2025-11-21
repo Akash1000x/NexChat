@@ -15,6 +15,8 @@ import SuggestionQueue from "./ui/suggestion-que"
 import { toast } from "sonner"
 import { useGetModels } from "@/hooks/api/models"
 import { startNewConversation } from "@/hooks/api/conversations"
+import { ArrowDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -37,6 +39,7 @@ export default function Chat({ conversationId }: { conversationId?: string }) {
   const { data: session } = authClient.useSession()
   const location = useLocation()
   const [message, setMessage] = React.useState<string>("")
+  const [isAtBottom, setIsAtBottom] = React.useState<boolean>(true)
 
   const navigate = useNavigate({ from: "/" })
 
@@ -44,11 +47,34 @@ export default function Chat({ conversationId }: { conversationId?: string }) {
     queryData && setMessages(queryData)
   }, [queryData])
 
+  const scrollToBottom = (behavior: ScrollBehavior) => {
+    chatRef.current?.scrollTo({
+      top: chatRef.current?.scrollHeight,
+      behavior,
+    })
+  }
+
   useEffect(() => {
-    if (chatRef.current) {
-      chatRef.current.scrollTop = chatRef.current.scrollHeight
-    }
+    scrollToBottom("instant")
   }, [messages, aiResponse])
+
+  useEffect(() => {
+    const chatElement = chatRef.current
+    if (!chatElement) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = chatElement
+      // Check if user is within 50px of the bottom
+      const isBottom = scrollHeight - scrollTop - clientHeight < 50
+      setIsAtBottom(isBottom)
+    }
+
+    chatElement.addEventListener("scroll", handleScroll)
+    // Check initial state
+    handleScroll()
+
+    return () => chatElement.removeEventListener("scroll", handleScroll)
+  }, [])
 
   const handleSelectQuestion = (question: string) => {
     setMessage(question)
@@ -243,6 +269,15 @@ export default function Chat({ conversationId }: { conversationId?: string }) {
             )}
           </div>
         )}
+        <div
+          className={cn(
+            "absolute bottom-36 right-1/2 -translate-x-1/2 bg-accent border shadow-sm rounded-full p-2 hover:bg-accent/80 hover:text-accent-foreground transition-all duration-300 cursor-pointer",
+            isAtBottom ? "opacity-0 invisible" : "opacity-100 visible",
+          )}
+          onClick={() => scrollToBottom("smooth")}
+        >
+          <ArrowDown className="size-4" />
+        </div>
       </div>
       <PromptInput
         onSubmit={handleSubmit}
